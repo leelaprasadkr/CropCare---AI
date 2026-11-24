@@ -290,8 +290,8 @@ HERO_SVG = """
   <g fill="#c6f432" filter="url(#glow)"><circle cx="200" cy="250" r="5"/><circle cx="335" cy="200" r="5"/><circle cx="300" cy="370" r="5"/></g>
   <g fill="rgba(198,244,50,.25)"><circle cx="200" cy="250" r="14"/><circle cx="335" cy="200" r="14"/><circle cx="300" cy="370" r="14"/></g>
   <g font-family="JetBrains Mono, monospace" font-size="11" fill="#e8f5d8" letter-spacing=".8">
-    <text x="48" y="198">INPUT 224×224 px</text>
-    <text x="392" y="142">8 CLASSES</text>
+    <text x="48" y="198">INPUT 160×160 px</text>
+    <text x="392" y="142">33 CLASSES</text>
     <text x="344" y="418">VALIDATOR 160 px</text>
   </g>
 </svg>
@@ -303,13 +303,13 @@ html(f"""
     <div>
         <span class="badge"><i></i> AI-POWERED AGRICULTURE</span>
         <h1>Give Every Leaf a <em>Healthier</em> Future.</h1>
-        <p>CropCare AI studies a photograph of a tomato, potato or bell pepper leaf and
-        estimates its condition, with confidence scores, symptoms and practical guidance
-        in English and ಕನ್ನಡ. Built to support, never replace, local agricultural expertise.</p>
+        <p>CropCare AI analyses leaf photographs from nine supported crops and estimates
+        their condition, with confidence scores, symptoms and practical guidance in
+        English and ಕನ್ನಡ. Built to support, never replace, local agricultural expertise.</p>
         <a class="cta" href="#detect" target="_self">Analyse a Leaf <span>→</span></a>
         <div class="stats">
-            <div><b>3</b><small>CROPS</small></div>
-            <div><b>8</b><small>CONDITIONS</small></div>
+            <div><b>9</b><small>CROPS</small></div>
+            <div><b>33</b><small>CLASSES</small></div>
             <div><b>2</b><small>LANGUAGES</small></div>
         </div>
     </div>
@@ -327,12 +327,14 @@ html(f"""
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models"
+EXPANDED_MODEL_DIR = BASE_DIR / "expanded_training_output"
 
-DISEASE_MODEL_PATH = MODEL_DIR / "best_cropcare_model.keras"
+DISEASE_MODEL_PATH = EXPANDED_MODEL_DIR / "cropcare_33class.keras"
+CLASS_NAMES_PATH = EXPANDED_MODEL_DIR / "class_names.json"
 VALIDATOR_MODEL_PATH = MODEL_DIR / "crop_validator.keras"
-CLASS_NAMES_PATH = MODEL_DIR / "class_names.json"
 
-IMAGE_SIZE = (224, 224)
+# Expanded model input dimensions
+IMAGE_SIZE = (160, 160)
 VALIDATOR_SIZE = (160, 160)
 
 # Preliminary threshold. Must be calibrated with real-world images.
@@ -449,6 +451,50 @@ disease_info = {
     }
 }
 
+# Descriptions for the 25 additional classes in the expanded model.
+EXPANDED_INFO = {
+    "Apple___Apple_scab": ("Apple", "Apple Scab", "Olive-green to dark scabby spots may appear on leaves.", "Remove fallen infected leaves, improve airflow and seek local crop advice."),
+    "Apple___Black_rot": ("Apple", "Black Rot", "Purple or brown leaf spots may develop and enlarge.", "Remove infected plant material and avoid leaving diseased debris near trees."),
+    "Apple___Cedar_apple_rust": ("Apple", "Cedar Apple Rust", "Yellow-orange spots may appear on the upper leaf surface.", "Monitor nearby host plants and ask a local horticulture expert about management."),
+    "Apple___healthy": ("Apple", "Healthy", "No visible disease symptoms are identified by this model.", "Continue regular watering, orchard sanitation and routine monitoring."),
+    "Cherry_(including_sour)___Powdery_mildew": ("Cherry", "Powdery Mildew", "A pale, powdery fungal growth may appear on leaf surfaces.", "Improve airflow, remove badly affected material and seek local crop advice."),
+    "Cherry_(including_sour)___healthy": ("Cherry", "Healthy", "No visible disease symptoms are identified by this model.", "Continue routine monitoring and appropriate orchard care."),
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": ("Corn", "Cercospora / Gray Leaf Spot", "Elongated gray or tan lesions may develop on corn leaves.", "Use crop rotation, residue management and locally recommended resistant varieties."),
+    "Corn_(maize)___Common_rust_": ("Corn", "Common Rust", "Reddish-brown raised pustules may appear on leaf surfaces.", "Monitor spread and consult local agricultural guidance for suitable management."),
+    "Corn_(maize)___healthy": ("Corn", "Healthy", "No visible disease symptoms are identified by this model.", "Maintain balanced nutrition, suitable irrigation and regular field scouting."),
+    "Corn_(maize)___Northern_Leaf_Blight": ("Corn", "Northern Leaf Blight", "Long, cigar-shaped gray-green lesions may appear on leaves.", "Rotate crops, manage infected residue and use locally recommended resistant hybrids."),
+    "Grape___Black_rot": ("Grape", "Black Rot", "Brown circular leaf lesions may develop with dark margins.", "Remove infected berries and leaves and seek local vineyard management advice."),
+    "Grape___Esca_(Black_Measles)": ("Grape", "Esca (Black Measles)", "Leaves may show interveinal discoloration or tiger-stripe patterns.", "Prune carefully in dry conditions and consult a vineyard disease specialist."),
+    "Grape___healthy": ("Grape", "Healthy", "No visible disease symptoms are identified by this model.", "Continue canopy management, sanitation and regular vineyard monitoring."),
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": ("Grape", "Leaf Blight", "Brown leaf spots may enlarge and cause affected tissue to dry.", "Remove infected fallen leaves and maintain good canopy airflow."),
+    "Peach___Bacterial_spot": ("Peach", "Bacterial Spot", "Small dark, angular or shot-hole-like lesions may appear on leaves.", "Avoid working with wet foliage and seek local orchard disease advice."),
+    "Peach___healthy": ("Peach", "Healthy", "No visible disease symptoms are identified by this model.", "Continue routine orchard inspection and appropriate plant care."),
+    "Strawberry___healthy": ("Strawberry", "Healthy", "No visible disease symptoms are identified by this model.", "Maintain good airflow, appropriate irrigation and routine monitoring."),
+    "Strawberry___Leaf_scorch": ("Strawberry", "Leaf Scorch", "Small purple-red spots may develop and merge into scorched areas.", "Remove old infected leaves, reduce prolonged leaf wetness and seek local advice."),
+    "Tomato___Bacterial_spot": ("Tomato", "Bacterial Spot", "Small dark, water-soaked spots may appear on leaves.", "Avoid overhead irrigation, remove infected debris and seek local advice."),
+    "Tomato___Leaf_Mold": ("Tomato", "Leaf Mold", "Yellow patches may appear above leaves with olive-green growth underneath.", "Improve ventilation and avoid prolonged leaf humidity."),
+    "Tomato___Septoria_leaf_spot": ("Tomato", "Septoria Leaf Spot", "Small circular spots with pale centers and dark borders may appear.", "Remove affected lower leaves and avoid splashing water onto foliage."),
+    "Tomato___Spider_mites Two-spotted_spider_mite": ("Tomato", "Spider Mites", "Fine stippling or bronzing may appear, sometimes with delicate webbing.", "Inspect leaf undersides and seek locally appropriate integrated pest advice."),
+    "Tomato___Target_Spot": ("Tomato", "Target Spot", "Brown lesions may show concentric rings resembling a target.", "Improve airflow, avoid prolonged leaf wetness and remove affected debris."),
+    "Tomato___Tomato_mosaic_virus": ("Tomato", "Tomato Mosaic Virus", "Leaves may show mottling, mosaic patterns or distortion.", "Remove suspected infected plants and disinfect tools; seek expert confirmation."),
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus": ("Tomato", "Tomato Yellow Leaf Curl Virus", "Leaves may curl upward and become yellow or stunted.", "Monitor whiteflies and seek local integrated pest-management advice."),
+}
+
+for class_key, (crop, status, symptoms, guidance) in EXPANDED_INFO.items():
+    disease_info.setdefault(class_key, {
+        "crop": crop,
+        "status": status,
+        "symptoms": symptoms,
+        "guidance": guidance,
+        "kn_symptoms": "ಈ ಲಕ್ಷಣಗಳು ಕಂಡುಬಂದರೆ ಸ್ಥಳೀಯ ಕೃಷಿ ತಜ್ಞರಿಂದ ದೃಢೀಕರಣ ಪಡೆಯಿರಿ.",
+        "kn_guidance": "ಬಾಧಿತ ಭಾಗಗಳನ್ನು ಗಮನಿಸಿ ಮತ್ತು ಸ್ಥಳೀಯ ಕೃಷಿ ತಜ್ಞರ ಸಲಹೆ ಪಡೆಯಿರಿ."
+    })
+
+missing_info = [name for name in class_names if name not in disease_info]
+if missing_info:
+    st.error("Missing disease descriptions for: " + ", ".join(missing_info))
+    st.stop()
+
 
 # ==================================================
 # 5. LANGUAGE  (rendered inside the navigation row)
@@ -497,9 +543,9 @@ with tips_col:
     """)
 
 st.caption(
-    "Supported categories: Tomato (Healthy, Early Blight, Late Blight), "
-    "Potato (Healthy, Early Blight, Late Blight), and Bell Pepper "
-    "(Healthy, Bacterial Spot)."
+    "Supported crops: Apple, Cherry, Corn, Grape, Peach, Bell Pepper, "
+    "Potato, Strawberry and Tomato (33 trained categories). Orange is not "
+    "included because healthy orange leaves were not present in the training dataset."
 )
 
 
@@ -536,8 +582,8 @@ if uploaded_file is not None:
 
         with col2:
             st.info(
-                "Upload a clear image of a tomato, potato "
-                "or bell pepper leaf for best results."
+                "Upload a clear leaf image from Apple, Cherry, Corn, Grape, Peach, "
+                "Bell Pepper, Potato, Strawberry or Tomato."
             )
 
             with st.container(border=True):
@@ -631,7 +677,8 @@ if uploaded_file is not None:
                     "The image validator flagged this image as possibly "
                     "outside its training domain. The disease result may be "
                     "less reliable, so check that the photo clearly shows "
-                    "a tomato, potato or bell pepper leaf."
+                    "a leaf from one of the supported crops. This validator is only "
+                    "a preliminary screening signal and was trained separately."
                 )
 
             # ------------------------------------------
